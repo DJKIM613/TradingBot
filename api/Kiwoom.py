@@ -5,7 +5,10 @@ import time
 import pandas as pd
 from util.const import *
 
+from util.singleton import *
 
+
+@singleton
 class Kiwoom(QAxWidget):
 	def __init__(self):
 		super().__init__()

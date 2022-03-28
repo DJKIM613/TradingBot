@@ -14,7 +14,7 @@ import pathlib
 import pandas as pd
 from datetime import datetime
 
-from db_helper import *
+from util.db_helper import *
 
 
 def set_chrome_driver(download_path=None):
@@ -58,7 +58,6 @@ def crawlUniverse(date):
 
 	wait_element(driver, path_sebu)
 	for i in range(len(paths)):
-		print(i)
 		cur = driver.find_element(By.XPATH, paths[i][0])
 
 		if paths[i][0] is path_date:
