@@ -1,1 +1,3 @@
 *.db
+api/__pycache__/*
+util/__pycache__/*

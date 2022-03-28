@@ -5,7 +5,7 @@ database_path = root_path + r"\database"
 
 
 def check_database_exist(db_name):
-	with open(database_path + r'\{}.db'.format(db_name), 'w'):
+	with open(database_path + r'\{}.db'.format(db_name), 'a'):
 		pass
 
 

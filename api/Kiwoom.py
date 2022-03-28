@@ -70,6 +70,33 @@ class Kiwoom(QAxWidget):
 		code_name = self.dynamicCall("GetMasterCodeName(QString)", code)
 		return code_name
 
+	def get_price_minute_data(self, code):
+		self.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
+		self.dynamicCall("SetInputValue(QString, QString)", "틱범위", "60")
+		self.dynamicCall("SetInputValue(QString, QString)", "수정주가구분", "1")
+		self.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10080_req", "opt10080", 0, "0001")
+
+		self.tr_event_loop.exec_()
+
+		ohlcv = self.tr_data
+
+		while self.tr_data['timeline'][-1] > '20150101000000' and self.has_next_tr_data:
+			self.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
+			self.dynamicCall("SetInputValue(QString, QString)", "틱범위", "60")
+			self.dynamicCall("SetInputValue(QString, QString)", "수정주가구분", "1")
+			self.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10080_req", "opt10080", 2, "0001")
+			self.tr_event_loop.exec_()
+
+			for key, val in self.tr_data.items():
+				ohlcv[key] += val
+
+			time.sleep(0.2)
+
+		df = pd.DataFrame(ohlcv, columns=['price'], index=ohlcv['timeline'])
+
+		df['price'] = df['price'].abs()
+		return df[::-1]
+
 	def get_price_data(self, code):
 		self.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
 		self.dynamicCall("SetInputValue(QString, QString)", "수정주가구분", "1")
@@ -101,6 +128,18 @@ class Kiwoom(QAxWidget):
 			self.has_next_tr_data = True
 		else:
 			self.has_next_tr_data = False
+
+		if rqname == "opt10080_req":
+			ohlcv = {'timeline': [], 'price': []}
+
+			for i in range(tr_data_cnt):
+				date_minute = self.dynamicCall("GetCommData(QString, QString, int, QString", trcode, rqname, i, "체결시간")
+				price = self.dynamicCall("GetCommData(QString, QString, int, QString", trcode, rqname, i, "현재가")
+
+				ohlcv['timeline'].append(date_minute.strip())
+				ohlcv['price'].append(int(price))
+
+			self.tr_data = ohlcv
 
 		if rqname == "opt10081_req":
 			ohlcv = {'date': [], 'open': [], 'high': [], 'low': [], 'close': [], 'volume': []}
