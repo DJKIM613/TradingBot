@@ -1,33 +1,34 @@
+from util.data_manager import *
+
+from PyQt5.QtWidgets import *
+
+import sys
+from datetime import *
+import time
 import pandas as pd
 
-from strategy.RSIStrategy import *
-import sys
+from util.indicator_caculator import *
 
-# app = QApplication(sys.argv)
-#
-# rsi_strategy = RSIStrategy()
-# rsi_strategy.start()
-#
-# app.exec_()
+app = QApplication(sys.argv)
 
-value1 = [1, 2, 3, 4, 5]
-value2 = [6, 7, 8, 9, 10]
-keys = [chr(i) for i in range(ord('a'), ord('f'))]
-print(keys)
+# 1. 일별로 universe 요청
+start = "2018-01-01"
+end = datetime.now().strftime("%Y-%m-%d")
+for date in pd.date_range(start=start, end=end):
+	cur_date = date.to_pydatetime().strftime("%Y%m%d")
+	# print(date.to_pydatetime().strftime("%Y%m%d"))
+	data = data_manager()
+	df = data.get_universe(cur_date)
+	print(df)
 
-print(value1)
-df = pd.DataFrame(index=keys, data={'value1': value1, 'value2': value2})
-print(df)
+	# 2. 일봉 데이터 요청 data_manager
+	for code in df['종목코드'][0:3]:
+		print(code)
+		price_data = data.get_price_data(code=code, data_period='day')
 
-conn = sqlite3.connect('common.db')
-cur = conn.cursor()
-# cur.execute(
-# 	"CREATE TABLE {} \
-# 	(keys varchar(10) PRIMARY KEY, \
-# 	value1 int(10) NOT NULL, \
-# 	value2 int(10) NOT NULL\
-# 	)".format('hihi'))
+		rsi = indicator_caculator().RSI(price_data, 2)
+		print(rsi)
 
-# with sqlite3.connect('common.db') as conn:
-# 	df.to_sql('hihi', con=conn, if_exists='replace')
-
+		time.sleep(10)
+# 3. RSI(2)
+app.exec_()

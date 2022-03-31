@@ -1,12 +1,7 @@
-import pandas as pd
-
 from api.Kiwoom import *
 from util.make_up_universe import *
-from util.db_helper import *
+from database.db_manager import *
 from util.time_helper import *
-from util.notifier import *
-import math
-import traceback
 
 import sys
 
@@ -16,6 +11,7 @@ class backtestTrader(QThread):
 		QThread.__init__(self)
 		self.backtest_name = "RSIStrategy"
 		self.kiwoom = Kiwoom()
+		self.db_manager = db_manager()
 
 		# 유니버스 정보를 담을 딕셔너리
 		self.universe = {}
@@ -28,7 +24,7 @@ class backtestTrader(QThread):
 
 	def check_and_get_universe(self):
 		"""유니버스가 존재하는지 확인하고 없으면 생성하는 함수"""
-		if not check_table_exist(self.strategy_name, 'universe'):
+		if not self.db_manager.check_table_exist(self.strategy_name, 'universe'):
 			universe_list = get_universe()
 			print(universe_list)
 			universe = {}
@@ -57,10 +53,10 @@ class backtestTrader(QThread):
 			})
 
 			# universe라는 테이블명으로 Dataframe을 DB에 저장함
-			insert_df_to_db(self.strategy_name, 'universe', universe_df)
+			self.db_manager.insert_df_to_db(self.strategy_name, 'universe', universe_df)
 
 		sql = "select * from universe"
-		cur = execute_sql(self.strategy_name, sql)
+		cur = self.db_manager.execute_sql(self.strategy_name, sql)
 		universe_list = cur.fetchall()
 		for item in universe_list:
 			idx, code, code_name, created_at = item
@@ -72,14 +68,14 @@ class backtestTrader(QThread):
 	def make_price_data(self, code):
 		db_name = "Common"
 		table_name = code
-		if not check_table_exist(db_name, table_name):
+		if not self.db_manager.check_table_exist(db_name, table_name):
 			# price_data = key : time, value : (cur_price)
 			price_data = self.kiwoom.get_price_minute_data(code)
-			insert_df_to_db(db_name, table_name, price_data)
+			self.db_manager.insert_df_to_db(db_name, table_name, price_data)
 
 		else:
 			sql = 'select * from [{}]'.format(table_name)
-			cur = execute_sql(db_name, sql)
+			cur = self.db_manager.execute_sql(db_name, sql)
 			price_data = cur.fetchall()
 
 			timeline = []

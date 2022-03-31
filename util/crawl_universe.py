@@ -12,9 +12,8 @@ import time
 import pathlib
 
 import pandas as pd
-from datetime import datetime
 
-from util.db_helper import *
+from database.db_manager import *
 
 
 def set_chrome_driver(download_path=None):
@@ -75,7 +74,8 @@ def crawlUniverse(date):
 	for name in pathlib.Path(cwd).glob('*.csv'):
 		df = pd.read_csv(name, encoding='cp949')
 		print(df)
-		insert_df_to_db('universe', date, df)
+		db_manager = db_manager()
+		db_manager.insert_df_to_db('universe', date, df)
 
 		os.remove(name)
 
