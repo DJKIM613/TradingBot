@@ -75,7 +75,7 @@ def crawlUniverse(date):
 		df = pd.read_csv(name, encoding='cp949')
 		print(df)
 		manager = db_manager()
-		manager.insert_df_to_db('stock_infomer', date, df)
+		manager.insert_df_to_db('stock_info', date, df)
 
 		os.remove(name)
 

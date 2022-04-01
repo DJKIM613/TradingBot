@@ -2,7 +2,7 @@ from api.Kiwoom import *
 from database import db_manager
 from stock_info.crawl_universe import *
 
-db_universe = 'stock_infomer'
+db_universe = 'stock_info'
 db_price_data = 'price_data'
 db_order = 'order'
 

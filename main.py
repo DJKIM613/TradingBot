@@ -9,7 +9,7 @@ from util.indicator_caculator import *
 
 app = QApplication(sys.argv)
 
-# 1. 일별로 stock_infomer 요청
+# 1. 일별로 stock_info 요청
 start = "2018-01-01"
 end = datetime.now().strftime("%Y-%m-%d")
 for date in pd.date_range(start=start, end=end):
