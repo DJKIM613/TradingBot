@@ -1,7 +1,6 @@
 from util.data_manager import *
 
 from PyQt5.QtWidgets import *
-
 import sys
 from datetime import *
 import time

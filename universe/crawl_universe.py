@@ -74,8 +74,8 @@ def crawlUniverse(date):
 	for name in pathlib.Path(cwd).glob('*.csv'):
 		df = pd.read_csv(name, encoding='cp949')
 		print(df)
-		db_manager = db_manager()
-		db_manager.insert_df_to_db('universe', date, df)
+		manager = AccountManager()
+		manager.insert_df_to_db('universe', date, df)
 
 		os.remove(name)
 

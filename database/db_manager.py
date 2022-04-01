@@ -6,36 +6,29 @@ database_path = root_path + r"\database"
 
 
 @singleton
-class db_manager():
+class AccountManager():
+	def select(self, db_name, table_name, select_values=[], where_values={}):
+		select_clause = get_simple_condition(select_values)
+		where_clause = get_where_condition(_dict_to_strdict(where_values))
+
+		sql = f"select {select_clause} from {table_name} {where_clause}"
+		return self.execute_sql(db_name, sql)
+
 	def insert(self, db_name, table_name, values={}):
 		values = _dict_to_strdict(values)
 
-		sql_colomns = ', '.join(values.keys())
-		sql_values = ', '.join(values.values())
+		into_clause = get_simple_condition(values.keys())
+		values_clause = get_simple_condition(values.values())
 
-		sql = f"insert into {table_name}({sql_colomns}) VALUES({sql_values})"
+		sql = f"insert into {table_name}({into_clause}) VALUES({values_clause})"
 
 		self.execute_sql(db_name, sql)
 
 	def update(self, db_name, table_name, set_values={}, where_values={}):
-		sql_values = []
-		for d in [set_values, where_values]:
-			sql_value = ''
-			d = _dict_to_strdict(d)
+		set_cluase = get_set_clause(_dict_to_strdict(set_values))
+		where_cluase = get_where_condition(_dict_to_strdict(where_values))
 
-			for key, val in d.items():
-				if len(sql_value) != 0:
-					sql_value += ' and '
-
-				if len(sql_values) == 0:
-					sql_value += f'{key} = {key} + ({val})'
-				else:
-					sql_value += f'{key} = {val}'
-
-			sql_values.append(sql_value)
-
-		sql = f"update {table_name} set {sql_values[0]} where id = (SELECT id from {table_name} where {sql_values[1]} order by id asc)"
-		print(sql)
+		sql = f"update {table_name} set {set_cluase} where id = (SELECT id from {table_name} {where_cluase} order by id asc)"
 
 		self.execute_sql(db_name, sql)
 
@@ -68,20 +61,54 @@ class db_manager():
 			return cur
 
 
-def _dict_to_strdict(dict):
-	for key, value in dict.items():
-		if type(value) == str and len(value) > 1 and value[0] == "'" and value[-1] == "'":
-			continue
-		if type(value) == str:
-			dict[key] = f"'{value}'"
-		else:
-			dict[key] = str(value)
+def get_simple_condition(list):
+	clause = ''
+	if len(list) == 0:
+		clause += '*'
+	else:
+		clause += ', '.join(list)
+	return clause
 
-	return dict
+
+def get_set_clause(dict):
+	clause = ''
+	for key, val in dict.items():
+		if len(clause) != 0:
+			clause += ' and '
+		clause += f'{key} = {key} + {val}'
+
+	return clause
+
+
+def get_where_condition(dict):
+	if len(dict) == 0:
+		return ''
+
+	clause = 'where '
+	init_length = len(clause)
+	for key, val in dict.items():
+		if len(clause) != init_length:
+			clause += ' and '
+		clause += f'{key} = {val}'
+
+	return clause
+
+
+def _dict_to_strdict(dict):
+	ret = dict.copy()
+	for key, value in ret.items():
+		if type(value) == str:
+			ret[key] = f"'{value}'"
+		else:
+			ret[key] = str(value)
+
+	return ret
 
 
 if __name__ == '__main__':
 	set_values = {'quantity': -5}
 	where_values = {'code': '12312', 'price': 13200, 'strategy_name': 'hello'}
-	db_manager = db_manager()
-	db_manager.update('order', 'open_buy_order', set_values, where_values)
+
+	account_manager = AccountManager()
+	quantity = account_manager.select('order', 'holding_stock', set_values, where_values)
+	account_manager.update('order', 'open_buy_order', set_values, where_values)
