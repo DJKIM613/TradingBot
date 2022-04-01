@@ -1,9 +1,8 @@
 from PyQt5.QAxContainer import *
-from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import time
 import pandas as pd
-from util.const import *
+from api.const import *
 
 from util.singleton import *
 

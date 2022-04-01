@@ -1,7 +1,5 @@
 import math
-from database.db_manager import *
-from util.data_manager import *
-from investor.investor import *
+from stock_info.stock_informer import *
 
 MAX_STOCK_NUM = 10
 COMMISION_FEE = 0.00015
@@ -20,8 +18,8 @@ stock_tables = [table_holding_stock, table_open_sell_order, table_open_buy_order
 class trader():
 	def __init__(self, deposit, investors):
 		self.balance = deposit
-		self.account_manager = AccountManager()
-		self.data_manager = data_manager()
+		self.account_manager = db_manager()
+		self.data_manager = stock_informer()
 		self.investors = investors
 
 	def run(self):

@@ -1,15 +1,15 @@
-from database.db_manager import AccountManager
+from database.db_manager import db_manager
 
 table_quantity_view = 'quantity_view'
 
 
-class strategy_wallet():
+class wallet():
 	def __init__(self, name, deposit):
 		self.deposit = deposit
 		self.name = name
 
 	def get_quantity(self, code):
-		account_manager = AccountManager()
+		account_manager = db_manager()
 		quantity = account_manager.select('order', table_quantity_view, ['quantity'],
 		                                  {'strategy_name': self.name, 'code': code}).fetchone()
 
@@ -28,5 +28,5 @@ class strategy_wallet():
 
 
 if __name__ == '__main__':
-	wallet = stratey_wallet('python', 100000)
+	wallet = wallet('python', 100000)
 	print(wallet.get_quantity('000660'))

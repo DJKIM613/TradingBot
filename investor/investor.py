@@ -1,11 +1,11 @@
-from strategy import *
-from strategy.strategy_wallet import *
+from investor.strategy import *
+from investor.wallet import *
 
 
 class investor():
 	def __init__(self, name, strategy, deposit):
 		self.strategy = strategy
-		self.strategy_wallet = strategy_wallet(name, deposit)
+		self.strategy_wallet = wallet(name, deposit)
 
 	def wantBuy(self, code, info):
 		return self.strategy_wallet.get_quantity == 0 and self.strategy.check_buy_condition(info) == True

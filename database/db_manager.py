@@ -6,7 +6,7 @@ database_path = root_path + r"\database"
 
 
 @singleton
-class AccountManager():
+class db_manager():
 	def select(self, db_name, table_name, select_values=[], where_values={}):
 		select_clause = get_simple_condition(select_values)
 		where_clause = get_where_condition(_dict_to_strdict(where_values))
@@ -109,6 +109,6 @@ if __name__ == '__main__':
 	set_values = {'quantity': -5}
 	where_values = {'code': '12312', 'price': 13200, 'strategy_name': 'hello'}
 
-	account_manager = AccountManager()
+	account_manager = db_manager()
 	quantity = account_manager.select('order', 'holding_stock', set_values, where_values)
 	account_manager.update('order', 'open_buy_order', set_values, where_values)

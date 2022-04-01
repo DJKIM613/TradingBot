@@ -14,7 +14,7 @@
 # 		self.kiwoom = Kiwoom()
 #
 # 		# 유니버스 정보를 담을 딕셔너리
-# 		self.universe = {}
+# 		self.stock_infomer = {}
 #
 # 		# 계좌 예수금
 # 		self.deposit = 0
@@ -54,10 +54,10 @@
 #
 # 	def check_and_get_universe(self):
 # 		"""유니버스가 존재하는지 확인하고 없으면 생성하는 함수"""
-# 		if not check_table_exist(self.strategy_name, 'universe'):
+# 		if not check_table_exist(self.strategy_name, 'stock_infomer'):
 # 			universe_list = get_universe()
 # 			print(universe_list)
-# 			universe = {}
+# 			stock_infomer = {}
 # 			# 오늘 날짜를 20210101 형태로 지정
 # 			now = datetime.now().strftime("%Y%m%d")
 #
@@ -73,32 +73,32 @@
 #
 # 				# 얻어온 종목명이 유니버스에 포함되어 있다면 딕셔너리에 추가
 # 				if code_name in universe_list:
-# 					universe[code] = code_name
+# 					stock_infomer[code] = code_name
 #
 # 			# 코드, 종목명, 생성일자자를 열로 가지는 DaaFrame 생성
 # 			universe_df = pd.DataFrame({
-# 				'code': universe.keys(),
-# 				'code_name': universe.values(),
-# 				'created_at': [now] * len(universe.keys())
+# 				'code': stock_infomer.keys(),
+# 				'code_name': stock_infomer.values(),
+# 				'created_at': [now] * len(stock_infomer.keys())
 # 			})
 #
 # 			# universe라는 테이블명으로 Dataframe을 DB에 저장함
-# 			insert_df_to_db(self.strategy_name, 'universe', universe_df)
+# 			insert_df_to_db(self.strategy_name, 'stock_infomer', universe_df)
 #
-# 		sql = "select * from universe"
+# 		sql = "select * from stock_infomer"
 # 		cur = execute_sql(self.strategy_name, sql)
 # 		universe_list = cur.fetchall()
 # 		for item in universe_list:
 # 			idx, code, code_name, created_at = item
-# 			self.universe[code] = {
+# 			self.stock_infomer[code] = {
 # 				'code_name': code_name
 # 			}
-# 		print(self.universe)
+# 		print(self.stock_infomer)
 #
 # 	def check_and_get_price_data(self):
 # 		"""일봉 데이터가 존재하는지 확인하고 없다면 생성하는 함수"""
-# 		for idx, code in enumerate(self.universe.keys()):
-# 			print("({}/{}) {}".format(idx + 1, len(self.universe), code))
+# 		for idx, code in enumerate(self.stock_infomer.keys()):
+# 			print("({}/{}) {}".format(idx + 1, len(self.stock_infomer), code))
 #
 # 			# (1)케이스: 일봉 데이터가 아예 없는지 확인(장 종료 이후)
 # 			if check_transaction_closed() and not check_table_exist(self.strategy_name, code):
@@ -137,7 +137,7 @@
 # 					price_df = pd.DataFrame.from_records(data=cur.fetchall(), columns=cols)
 # 					price_df = price_df.set_index('index')
 # 					# 가격 데이터를 self.universe에서 접근할 수 있도록 저장
-# 					self.universe[code]['price_df'] = price_df
+# 					self.stock_infomer[code]['price_df'] = price_df
 #
 # 	def run(self):
 # 		"""실질적 수행 역할을 하는 함수"""
@@ -149,8 +149,8 @@
 # 					time.sleep(5 * 60)
 # 					continue
 #
-# 				for idx, code in enumerate(self.universe.keys()):
-# 					print('[{}/{}_{}]'.format(idx + 1, len(self.universe), self.universe[code]['code_name']))
+# 				for idx, code in enumerate(self.stock_infomer.keys()):
+# 					print('[{}/{}_{}]'.format(idx + 1, len(self.stock_infomer), self.stock_infomer[code]['code_name']))
 # 					time.sleep(0.5)
 #
 # 					# (1)접수한 주문이 있는지 확인
@@ -187,8 +187,8 @@
 # 		# 장운영구분을 확인하고 싶으면 사용할 코드
 # 		# self.kiwoom.set_real_reg("1000", "", get_fid("장운영구분"), "0")
 #
-# 		# universe 딕셔너리의 key값들은 종목코드들을 의미
-# 		codes = self.universe.keys()
+# 		# stock_infomer 딕셔너리의 key값들은 종목코드들을 의미
+# 		codes = self.stock_infomer.keys()
 #
 # 		# 종목코드들을 ';'을 기준으로 묶어주는 작업
 # 		codes = ";".join(map(str, codes))
@@ -198,7 +198,7 @@
 #
 # 	def check_sell_signal(self, code):
 # 		"""매도대상인지 확인하는 함수"""
-# 		universe_item = self.universe[code]
+# 		universe_item = self.stock_infomer[code]
 #
 # 		# (1)현재 체결정보가 존재하지 않는지 확인
 # 		if code not in self.kiwoom.universe_realtime_transaction_info.keys():
@@ -265,7 +265,7 @@
 # 		if not check_adjacent_transaction_closed():
 # 			return False
 #
-# 		universe_item = self.universe[code]
+# 		universe_item = self.stock_infomer[code]
 #
 # 		# (1)현재 체결정보가 존재하지 않는지 확인
 # 		if code not in self.kiwoom.universe_realtime_transaction_info.keys():

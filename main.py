@@ -1,22 +1,21 @@
-from util.data_manager import *
+from stock_info.stock_informer import *
 
 from PyQt5.QtWidgets import *
 import sys
 from datetime import *
 import time
-import pandas as pd
 
 from util.indicator_caculator import *
 
 app = QApplication(sys.argv)
 
-# 1. 일별로 universe 요청
+# 1. 일별로 stock_infomer 요청
 start = "2018-01-01"
 end = datetime.now().strftime("%Y-%m-%d")
 for date in pd.date_range(start=start, end=end):
 	cur_date = date.to_pydatetime().strftime("%Y%m%d")
 	# print(date.to_pydatetime().strftime("%Y%m%d"))
-	data = data_manager()
+	data = stock_informer()
 	df = data.get_universe(cur_date)
 	print(df)
 
