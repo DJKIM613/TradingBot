@@ -1,7 +1,6 @@
 import math
 from stock_info.stock_informer import *
 
-MAX_STOCK_NUM = 10
 COMMISION_FEE = 0.00015
 
 db_universe = 'universe'
@@ -11,6 +10,8 @@ db_order = 'order'
 table_holding_stock = 'holding_stock'
 table_open_sell_order = 'open_sell_order'
 table_open_buy_order = 'open_buy_order'
+
+view_total_quantity = 'total_quantity_view'
 
 stock_tables = [table_holding_stock, table_open_sell_order, table_open_buy_order]
 
@@ -25,9 +26,6 @@ class trader():
 	def run(self):
 		pass
 
-	def check_buy_condition(self):
-		return (self.get_balance_count() + self.get_buy_order_count()) >= 10
-
 	def get_total_amount(self):
 		select_values = ["sum(quantity * price)", ]
 		where_values = {}
@@ -39,22 +37,12 @@ class trader():
 
 		return total_amount
 
-	def get_quantity(self, price):
-		budget = self.balance / (10 - (self.get_balance_count() + self.get_buy_order_count()))
-		quantity = math.floor(budget / price)
-		return quantity
 
-	def apply_buy_order(self, strategy_name, code, price):
-		if self.check_buy_condition():
-			return False
-
-		quantity = self.get_quantity(price)
+	def apply_buy_order(self, strategy_name, code, quantity, price):
 		amount = quantity * price
 		self.balance = math.floor(self.balance - amount * (1 + COMMISION_FEE))
-
 		data = {'code': code, 'quantity': quantity, 'price': price, 'strategy_name': strategy_name}
-		self.db_manager.insert(db_order, table_open_buy_order, data)
-		return quantity
+		self.account_manager.insert(db_order, table_open_buy_order, data)
 
 	def confirm_buy_order(self, strategy_name, code, quantity, purchase_price):
 		data = {'code': code, 'quantity': quantity, 'purchase_price': purchase_price,
@@ -62,21 +50,21 @@ class trader():
 		set_values = {'quantity': -quantity}
 		where_values = {'code': code, 'price': purchase_price, 'strategy_name': strategy_name}
 
-		self.db_manager.insert(db_order, table_holding_stock, data)
-		self.db_manager.update(db_order, table_open_buy_order, set_values, where_values)
+		self.account_manager.insert(db_order, table_holding_stock, data)
+		self.account_manager.update(db_order, table_open_buy_order, set_values, where_values)
 
 	def apply_sell_order(self, strategy_name, code, quantity, price):
 		set_values = {'quantity': -quantity}
 		where_values = {'code': code, 'strategy_name': strategy_name}
-		self.db_manager.update(db_order, table_holding_stock, set_values, where_values)
+		self.account_manager.update(db_order, table_holding_stock, set_values, where_values)
 
 		data = {'code': code, 'quantity': quantity, 'price': price, 'strategy_name': strategy_name}
-		self.db_manager.insert(db_order, table_open_sell_order, data)
+		self.account_manager.insert(db_order, table_open_sell_order, data)
 
 	def confirm_sell_order(self, strategy_name, code, quantity, sell_price):
 		set_values = {'quantity': -quantity}
 		where_values = {'code': code, 'strategy_name': strategy_name}
-		self.db_manager.update(db_order, table_open_sell_order, set_values, where_values)
+		self.account_manager.update(db_order, table_open_sell_order, set_values, where_values)
 
 		amount = quantity * sell_price
-		self.balance = math.floor(self.balance + amount * (1 + COMMISION_FEE))
+		self.balance = math.floor(self.balance + amount * (1 - COMMISION_FEE))
