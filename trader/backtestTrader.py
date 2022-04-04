@@ -19,6 +19,8 @@ class backtestTrader(trader):
 		for date in pd.date_range(start=start, end=end):
 			cur_date = date.to_pydatetime().strftime("%Y%m%d")
 			universe = self.data_manager.get_universe(cur_date)
+			self.update_price_data(universe)
+
 			universe = universe.set_index('종목코드').to_dict('index')
 
 			for investor in self.investors:
@@ -35,6 +37,13 @@ class backtestTrader(trader):
 						print(f'{date} : buy {code}, {info["PER"]}, {price}')
 						self.apply_buy_order(investor.getName(), code, quantity, price)
 						self.confirm_buy_order(investor.getName(), code, quantity, price)
+
+	def update_price_data(self, universe):
+		mapping = {None: 0}
+		stock_price_data = universe.loc[:, ['종목코드', '종가']]
+		stock_price_data.replace(mapping, inplace=True)
+		stock_price_data.rename(columns={'종목코드': 'code', '종가':'price'}, inplace=True)
+		self.account_manager.insert_df_to_db('order', 'stock_price_info', stock_price_data)
 
 
 if __name__ == "__main__":

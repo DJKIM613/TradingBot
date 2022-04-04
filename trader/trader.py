@@ -51,12 +51,12 @@ class trader():
 		where_values = {'code': code, 'price': purchase_price, 'strategy_name': strategy_name}
 
 		self.account_manager.insert(db_order, table_holding_stock, data)
-		self.account_manager.update(db_order, table_open_buy_order, set_values, where_values)
+		self.account_manager.increase(db_order, table_open_buy_order, set_values, where_values)
 
 	def apply_sell_order(self, strategy_name, code, quantity, price):
 		set_values = {'quantity': -quantity}
 		where_values = {'code': code, 'strategy_name': strategy_name}
-		self.account_manager.update(db_order, table_holding_stock, set_values, where_values)
+		self.account_manager.increase(db_order, table_holding_stock, set_values, where_values)
 
 		data = {'code': code, 'quantity': quantity, 'price': price, 'strategy_name': strategy_name}
 		self.account_manager.insert(db_order, table_open_sell_order, data)
@@ -64,7 +64,7 @@ class trader():
 	def confirm_sell_order(self, strategy_name, code, quantity, sell_price):
 		set_values = {'quantity': -quantity}
 		where_values = {'code': code, 'strategy_name': strategy_name}
-		self.account_manager.update(db_order, table_open_sell_order, set_values, where_values)
+		self.account_manager.increase(db_order, table_open_sell_order, set_values, where_values)
 
 		amount = quantity * sell_price
 		self.balance = math.floor(self.balance + amount * (1 - COMMISION_FEE))

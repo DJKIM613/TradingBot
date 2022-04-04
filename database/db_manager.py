@@ -25,7 +25,15 @@ class db_manager():
 		self.execute_sql(db_name, sql)
 
 	def update(self, db_name, table_name, set_values={}, where_values={}):
-		set_cluase = get_set_clause(_dict_to_strdict(set_values))
+		update_cluase = get_update_set_clause(_dict_to_strdict(set_values))
+		where_cluase = get_where_condition(_dict_to_strdict(where_values))
+
+		sql = f"update {table_name} set {update_cluase} where id = (SELECT id from {table_name} {where_cluase} order by id asc)"
+
+		self.execute_sql(db_name, sql)
+
+	def increase(self, db_name, table_name, set_values={}, where_values={}):
+		set_cluase = get_increase_set_clause(_dict_to_strdict(set_values))
 		where_cluase = get_where_condition(_dict_to_strdict(where_values))
 
 		sql = f"update {table_name} set {set_cluase} where id = (SELECT id from {table_name} {where_cluase} order by id asc)"
@@ -70,7 +78,17 @@ def get_simple_condition(list):
 	return clause
 
 
-def get_set_clause(dict):
+def get_update_set_clause(dict):
+	clause = ''
+	for key, val in dict.items():
+		if len(clause) != 0:
+			clause += ' and '
+		clause += f'{key} = {val}'
+
+	return clause
+
+
+def get_increase_set_clause(dict):
 	clause = ''
 	for key, val in dict.items():
 		if len(clause) != 0:
@@ -111,4 +129,4 @@ if __name__ == '__main__':
 
 	account_manager = db_manager()
 	quantity = account_manager.select('order', 'holding_stock', set_values, where_values)
-	account_manager.update('order', 'open_buy_order', set_values, where_values)
+	account_manager.increase('order', 'open_buy_order', set_values, where_values)
