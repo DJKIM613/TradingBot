@@ -17,8 +17,7 @@ stock_tables = [table_holding_stock, table_open_sell_order, table_open_buy_order
 
 
 class trader():
-	def __init__(self, deposit, investors):
-		self.balance = deposit
+	def __init__(self, investors):
 		self.account_manager = db_manager()
 		self.data_manager = stock_informer()
 		self.investors = investors
@@ -37,12 +36,11 @@ class trader():
 
 		return total_amount
 
-
 	def apply_buy_order(self, strategy_name, code, quantity, price):
 		amount = quantity * price
-		self.balance = math.floor(self.balance - amount * (1 + COMMISION_FEE))
 		data = {'code': code, 'quantity': quantity, 'price': price, 'strategy_name': strategy_name}
 		self.account_manager.insert(db_order, table_open_buy_order, data)
+		return amount
 
 	def confirm_buy_order(self, strategy_name, code, quantity, purchase_price):
 		data = {'code': code, 'quantity': quantity, 'purchase_price': purchase_price,
@@ -67,4 +65,4 @@ class trader():
 		self.account_manager.increase(db_order, table_open_sell_order, set_values, where_values)
 
 		amount = quantity * sell_price
-		self.balance = math.floor(self.balance + amount * (1 - COMMISION_FEE))
+		return amount

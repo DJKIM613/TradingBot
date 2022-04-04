@@ -27,3 +27,12 @@ class investor():
 
 		else:
 			return 0
+
+	def getAccountValue(self):
+		return self.strategy_wallet.get_account_value()
+
+	def getBalance(self):
+		return self.strategy_wallet.get_balance()
+
+	def setBalance(self, value):
+		return self.strategy_wallet.set_balance(value)

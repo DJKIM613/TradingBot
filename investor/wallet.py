@@ -11,9 +11,23 @@ total_quantity_view = 'total_quantity_view'
 
 class wallet():
 	def __init__(self, name, deposit):
-		self.deposit = deposit
+		self.balance = deposit
 		self.name = name
 		self.account_manager = db_manager()
+
+	def get_amount(self):
+		select_values = ['sum(amount)']
+		where_values = {'strategy_name': self.name}
+		amount = self.account_manager.select(db_order, holding_and_open_sell_quantity_view, select_values,
+		                                     where_values).fetchone()[0]
+
+		if amount == None:
+			amount = 0
+
+		return amount
+
+	def get_account_value(self):
+		return self.balance + self.get_amount()
 
 	def get_applied_stock_type_num(self):
 		select_values = []
@@ -41,15 +55,15 @@ class wallet():
 
 	def get_desired_quantity(self, price):
 		applied_stock_type_num = self.get_applied_stock_type_num()
-		budget = self.deposit / (10 - applied_stock_type_num)
+		budget = self.balance / (10 - applied_stock_type_num)
 		quantity = math.floor(budget / price)
 		return quantity
 
-	def get_deposit(self):
-		return self.deposit
+	def get_balance(self):
+		return self.balance
 
-	def set_deposit(self, deposit):
-		self.deposit = deposit
+	def set_balance(self, value):
+		self.balance = value
 
 
 if __name__ == '__main__':
