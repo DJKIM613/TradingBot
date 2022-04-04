@@ -1,5 +1,5 @@
 from api.Kiwoom import *
-from database import db_manager
+from database.db_manager import *
 from stock_info.crawl_universe import *
 
 db_universe = 'stock_info'
@@ -19,15 +19,17 @@ class universe_informer():
 			sql = "select * from [{}]".format(date)
 
 		if not self.db_manager.check_table_exist(db_name, date):
-			crawlUniverse(date)
+			df = crawlUniverse(date)
+			self.db_manager.insert_df_to_db('stock_info', date, df)
 
-		datalist = self.db_manager.execute_sql(db_name, sql).fetchall()
+		else:
+			datalist = self.db_manager.execute_sql(db_name, sql).fetchall()
+			columns = ['index', '종목코드', '종목명', '종가', '대비', '등락률', 'EPS', 'PER', '선행 EPS', '선행 PER', 'BPS', 'PBR',
+			           '주당배당금',
+			           '배당수익률']
 
-		columns = ['index', '종목코드', '종목명', '종가', '대비', '등락률', 'EPS', 'PER', '선행 EPS', '선행 PER', 'BPS', 'PBR', '주당배당금',
-		           '배당수익률']
-
-		df = pd.DataFrame(datalist, columns=columns)
-		del df['index']
+			df = pd.DataFrame(datalist, columns=columns)
+			del df['index']
 
 		return df
 

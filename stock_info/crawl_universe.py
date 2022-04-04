@@ -13,12 +13,10 @@ import pathlib
 
 import pandas as pd
 
-from database.db_manager import *
-
 
 def set_chrome_driver(download_path=None):
 	chrome_options = webdriver.ChromeOptions()
-	print(download_path)
+	chrome_options.add_argument("headless")
 	if download_path is not None:
 		prefs = {}
 		prefs["download.default_directory"] = download_path
@@ -73,11 +71,8 @@ def crawlUniverse(date):
 
 	for name in pathlib.Path(cwd).glob('*.csv'):
 		df = pd.read_csv(name, encoding='cp949')
-		print(df)
-		manager = db_manager()
-		manager.insert_df_to_db('stock_info', date, df)
-
 		os.remove(name)
+		return df
 
 
 if __name__ == "__main__":
