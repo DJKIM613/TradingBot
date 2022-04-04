@@ -21,7 +21,6 @@ class universe_informer():
 		if not self.db_manager.check_table_exist(db_name, date):
 			df = self.universe_crawler.crawlUniverse(date)
 			df = df[(~df.종목명.str.contains("지주")) & (~df.종목명.str.contains("홀딩스"))]
-			print(df)
 			self.db_manager.insert_df_to_db('stock_info', date, df)
 
 		else:
