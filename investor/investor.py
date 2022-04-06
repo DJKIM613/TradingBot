@@ -11,28 +11,26 @@ class investor():
 	def getName(self):
 		return self.name
 
-	def wantBuy(self, code, info):
-		if self.strategy_wallet.check_buy_condition(code) == True and self.strategy.check_buy_condition(
-				info) == True:
-			amount = self.strategy_wallet.get_desired_quantity(info['종가'])
-			return amount
+	def getAccountValue(self):
+		return self.strategy_wallet.get_amount() + self.strategy_wallet.get_balance()
 
-		else:
-			return 0
+	def wantBuy(self, code, info):
+		price = info['종가']
+		return self.strategy_wallet.check_buy_condition(code, price) == True and self.strategy.check_buy_condition(
+			info) == True
 
 	def wantSell(self, code, info):
-		if self.strategy_wallet.check_sell_condition(code) == True and self.strategy.check_sell_condition(
-				info) == True:
-			return self.strategy_wallet.get_quantity(code)
+		return self.strategy_wallet.check_sell_condition(code) == True and self.strategy.check_sell_condition(
+			info) == True
 
-		else:
-			return 0
+	def apply_buy_order(self, code, info):
+		return self.strategy_wallet.apply_buy_order(code, info)
 
-	def getAccountValue(self):
-		return self.strategy_wallet.get_account_value()
+	def confirm_buy_order(self, code, purchase_price, quantity):
+		self.strategy_wallet.confirm_buy_order(code, purchase_price, quantity)
 
-	def getBalance(self):
-		return self.strategy_wallet.get_balance()
+	def apply_sell_order(self, code, info):
+		return self.strategy_wallet.apply_sell_order(code, info)
 
-	def setBalance(self, value):
-		return self.strategy_wallet.set_balance(value)
+	def confirm_sell_order(self, code, sell_price, quantity):
+		self.strategy_wallet.confirm_sell_order(code, sell_price, quantity)
