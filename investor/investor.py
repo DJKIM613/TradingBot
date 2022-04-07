@@ -1,36 +1,84 @@
+from investor.wallet.abstract_wallet import *
 from investor.strategy import *
-from investor.wallet import *
+import math
+
+MAX_STOCK_NUM = 10
+COMMISION_FEE = 0.00015
+
+open_buy = 'open_buy'
+open_sell = 'open_sell'
+holding_stock = 'holding_stock'
 
 
 class investor():
-	def __init__(self, name, strategy, deposit):
+	def __init__(self, name, wallet, strategy):
 		self.name = name
 		self.strategy = strategy
-		self.strategy_wallet = wallet(name, deposit)
+		self.wallet = wallet
+		self.stock_prices = {}
 
 	def getName(self):
 		return self.name
 
+	def updateStockPrices(self, stock_prices):
+		self.stock_prices = stock_prices
+
+	def getStockValue(self):
+		stock_detail = self.wallet.get_stock_detail()
+		stock_value = 0
+		for _, amount in stock_detail[open_buy].values():
+			stock_value += amount
+
+		for status in [holding_stock, open_sell]:
+			for code, (quantity, _) in stock_detail[status].items():
+				stock_value += quantity * self.stock_prices[code]
+
+		return stock_value
+
 	def getAccountValue(self):
-		return self.strategy_wallet.get_amount() + self.strategy_wallet.get_balance()
+		return self.getStockValue() + self.wallet.get_balance()
 
-	def wantBuy(self, code, info):
+	def wantBuy(self, code, info) -> bool:
 		price = info['종가']
-		return self.strategy_wallet.check_buy_condition(code, price) == True and self.strategy.check_buy_condition(
+		is_under_max_stock_num = self.wallet.get_applied_stock_type_num() < MAX_STOCK_NUM
+		is_quantity_zero = self.wallet.get_stock_quantity_and_amount(holding_stock, code)[0] == 0
+		is_price_under_balance = self.wallet.get_balance() > price
+		is_satify_strategy = self.strategy.check_buy_condition(info)
+		return is_under_max_stock_num and is_quantity_zero and is_price_under_balance and is_satify_strategy
+
+	def wantSell(self, code, info) -> bool:
+		return self.wallet.get_stock_quantity_and_amount(holding_stock, code)[
+			       0] > 0 and self.strategy.check_sell_condition(
 			info) == True
 
-	def wantSell(self, code, info):
-		return self.strategy_wallet.check_sell_condition(code) == True and self.strategy.check_sell_condition(
-			info) == True
+	def apply_buy_order(self, code, info) -> (str, int, float):
+		price = info['종가']
+		quantity = self.get_desired_quantity(price)
+		amount = quantity * price
 
-	def apply_buy_order(self, code, info):
-		return self.strategy_wallet.apply_buy_order(code, info)
+		self.wallet.increase_stock_quantity_and_amount(open_buy, code, (quantity, amount))
+		self.wallet.increase_balance(-amount * (1 + COMMISION_FEE))
+		return (code, price, quantity)
 
-	def confirm_buy_order(self, code, purchase_price, quantity):
-		self.strategy_wallet.confirm_buy_order(code, purchase_price, quantity)
+	def confirm_buy_order(self, code, quantiy_and_amount) -> None:
+		self.wallet.increase_stock_quantity_and_amount(open_buy, code, -quantiy_and_amount)
+		self.wallet.increase_stock_quantity_and_amount(holding_stock, code, quantiy_and_amount)
 
-	def apply_sell_order(self, code, info):
-		return self.strategy_wallet.apply_sell_order(code, info)
+	def apply_sell_order(self, code, info) -> (str, int, float):
+		price = info['종가']
+		self.wallet.get_stock_quantity_and_amount(holding_stock, code)
+		quantity, amount = self.wallet.get_stock_quantity_and_amount(holding_stock, code)
+		self.wallet.increase_stock_quantity_and_amount(holding_stock, code, (-quantity, -amount))
+		self.wallet.increase_stock_quantity_and_amount(open_sell, code, (quantity, amount))
+		return (code, price, quantity)
 
 	def confirm_sell_order(self, code, sell_price, quantity):
-		self.strategy_wallet.confirm_sell_order(code, sell_price, quantity)
+		amount = quantity * sell_price
+		self.wallet.increase_stock_quantity_and_amount(open_sell, code, (-quantity, -amount))
+		self.wallet.increase_balance(amount * (1 - COMMISION_FEE))
+
+	def get_desired_quantity(self, price):
+		applied_stock_type_num = self.wallet.get_applied_stock_type_num()
+		budget = self.wallet.get_balance() / (10 - applied_stock_type_num)
+		quantity = math.floor(budget / price)
+		return quantity

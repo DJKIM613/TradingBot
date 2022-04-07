@@ -1,32 +1,17 @@
-from stock_info.stock_informer import *
+import numpy as np
 
-from PyQt5.QtWidgets import *
-import sys
-from datetime import *
-import time
+class A:
+	def f(self):
+		print('A::f')
 
-from util.indicator_caculator import *
+	def d(self):
+		self.f()
 
-app = QApplication(sys.argv)
+def f(x, y) :
+	a, b, c = x
+	print(a)
 
-# 1. 일별로 stock_info 요청
-start = "2018-01-01"
-end = datetime.now().strftime("%Y-%m-%d")
-for date in pd.date_range(start=start, end=end):
-	cur_date = date.to_pydatetime().strftime("%Y%m%d")
-	# print(date.to_pydatetime().strftime("%Y%m%d"))
-	data = stock_informer()
-	df = data.get_universe(cur_date)
-	print(df)
+if __name__ == '__main__':
+	x = (1, 2)
 
-	# 2. 일봉 데이터 요청 data_manager
-	for code in df['종목코드'][0:3]:
-		print(code)
-		price_data = data.get_price_data(code=code, data_period='day')
-
-		rsi = indicator_caculator().RSI(price_data, 2)
-		print(rsi)
-
-		time.sleep(10)
-# 3. RSI(2)
-app.exec_()
+	f(-x)
