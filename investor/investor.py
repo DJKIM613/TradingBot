@@ -41,10 +41,13 @@ class investor():
 	def wantBuy(self, code, info) -> bool:
 		price = info['종가']
 		is_under_max_stock_num = self.wallet.get_applied_stock_type_num() < MAX_STOCK_NUM
+		if is_under_max_stock_num == False:
+			return False
+
 		is_quantity_zero = self.wallet.get_stock_quantity_and_amount(holding_stock, code)[0] == 0
-		is_price_under_balance = self.wallet.get_balance() > price
+		is_desired_quantity_positive = self.get_desired_quantity(price) > 0
 		is_satify_strategy = self.strategy.check_buy_condition(info)
-		return is_under_max_stock_num and is_quantity_zero and is_price_under_balance and is_satify_strategy
+		return is_quantity_zero and is_desired_quantity_positive and is_satify_strategy
 
 	def wantSell(self, code, info) -> bool:
 		return self.wallet.get_stock_quantity_and_amount(holding_stock, code)[

@@ -2,28 +2,23 @@ from trader import *
 from PyQt5.QtWidgets import *
 import sys
 
-from datetime import *
-
 from investor.investor import *
 from investor.wallet.dict_wallet import *
+
+from pykrx import stock
 
 
 class backtestTrader(trader):
 	def __init__(self, investors={}):
 		super().__init__(investors)
 
-	def run(self):
-		start = "2019-01-02"
-		end = datetime.now().strftime("%Y-%m-%d")
-
-		for date in pd.date_range(start=start, end=end):
-			cur_date = date.to_pydatetime().strftime("%Y%m%d")
+	def run(self, fromdate, todate):
+		for date in stock.get_previous_business_days(fromdate=fromdate, todate=todate):
+			cur_date = date.strftime("%Y%m%d")
 			universe = self.data_manager.get_universe(cur_date)
-			if not self.is_market_open(universe):
-				continue
 
-			stock_info = universe.set_index('종목코드').to_dict('index')
-			stock_prices = universe.set_index('종목코드')['종가']
+			stock_info = universe.to_dict('index')
+			stock_prices = universe['종가']
 			for investor in self.investors:
 				print(f'{cur_date} : {investor.getAccountValue()}')
 				investor.updateStockPrices(stock_prices)
@@ -39,9 +34,6 @@ class backtestTrader(trader):
 						investor.confirm_buy_order(code, quantity)
 						print(f'{date} : buy {code}, {info["PER"]}, {price}')
 
-	def is_market_open(self, universe):
-		return universe['종가'][0] is not None
-
 
 if __name__ == "__main__":
 	app = QApplication(sys.argv)
@@ -50,5 +42,5 @@ if __name__ == "__main__":
 	wallet = dict_wallet(name, 1000000)
 	investor = investor(name, wallet, RSI_strategy)
 	trader = backtestTrader([investor, ])
-	trader.run()
+	trader.run('20190101', '20220407')
 	app.exec_()
