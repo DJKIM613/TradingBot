@@ -63,9 +63,9 @@ class investor():
 		self.wallet.increase_balance(-amount * (1 + COMMISION_FEE))
 		return (code, price, quantity)
 
-	def confirm_buy_order(self, code, quantiy_and_amount) -> None:
-		self.wallet.increase_stock_quantity_and_amount(open_buy, code, -quantiy_and_amount)
-		self.wallet.increase_stock_quantity_and_amount(holding_stock, code, quantiy_and_amount)
+	def confirm_buy_order(self, code, price, quantity) -> None:
+		self.wallet.increase_stock_quantity_and_amount(open_buy, code, (-quantity, -quantity * price))
+		self.wallet.increase_stock_quantity_and_amount(holding_stock, code, (quantity, quantity * price))
 
 	def apply_sell_order(self, code, info) -> (str, int, float):
 		price = info['종가']

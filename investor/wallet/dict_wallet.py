@@ -44,7 +44,7 @@ class dict1D(dict):
 		else:
 			return val
 
-	def __setitem__(self, key, value):
+	def __setitem__(self, key, value) -> None:
 		quantity, amount = value
 		if quantity == 0:
 			self.pop(key)

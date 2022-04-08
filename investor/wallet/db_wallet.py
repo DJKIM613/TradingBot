@@ -1,82 +1,49 @@
 from investor.wallet.abstract_wallet import *
 from database.db_manager import db_manager
-import math
+import numpy as np
 
 MAX_STOCK_NUM = 10
 
-COMMISION_FEE = 0.00015
-
-db_universe = 'universe'
-db_price_data = 'price_data'
-db_order = 'order'
-
-table_holding_stock = 'holding_stock'
-table_open_sell_order = 'open_sell_order'
-table_open_buy_order = 'open_buy_order'
-
-holding_and_open_sell_quantity_view = 'holding_and_open_sell_quantity_view'
-total_quantity_view = 'total_quantity_view'
-
-stock_tables = [table_holding_stock, table_open_sell_order, table_open_buy_order]
+db_name = 'order'
+table_list = ['open_buy', 'holding_stock', 'open_sell', 'stock_abstract']
+column_list = ['strategy_name', 'code', 'quantity', 'amount']
 
 
 class db_wallet(abstract_wallet):
 	def __init__(self, name, deposit):
-		super().__init__()
-		self.account_manager = db_manager()
+		super().__init__(name, deposit)
+		self.stock_detail = {'open_buy': dictDB(db_name, 'open_buy', name),
+		                     'holding_stock': dictDB(db_name, 'holding_stock', name),
+		                     'open_sell': dictDB(db_name, 'open_sell', name)}
+		self.stock_abstract = dictDB(db_name, 'stock_abstract', name)
 
-	def get_amount(self):
-		select_values = ['sum(amount)']
-		where_values = {'strategy_name': self.name}
-		amount = self.account_manager.select(db_order, holding_and_open_sell_quantity_view, select_values,
-		                                     where_values).fetchone()[0]
-
-		if amount == None:
-			amount = 0
-
-		return amount
-
-	def get_stock_quantity(self, status, code) -> int:
-		def get_holding_quantity(self, code):
-			quantity = self.account_manager.select('order', holding_and_open_sell_quantity_view, ['quantity'],
-			                                       {'strategy_name': self.name, 'code': code}).fetchone()
-
-			if quantity == None:
-				quantity = 0
-			else:
-				quantity = quantity[0]
-
-			return quantity
-
-	def get_applied_stock_type_num(self):
-		select_values = []
-		where_values = {'strategy_name': self.name}
-		cur = self.account_manager.select(db_order, total_quantity_view, select_values, where_values)
-		applied_stock_type_num = len(cur.fetchall())
-		return applied_stock_type_num
-
-	def get_holding_quantity(self, code):
-		quantity = self.account_manager.select('order', holding_and_open_sell_quantity_view, ['quantity'],
-		                                       {'strategy_name': self.name, 'code': code}).fetchone()
-
-		if quantity == None:
-			quantity = 0
-		else:
-			quantity = quantity[0]
-
-		return quantity
-
-	def get_desired_quantity(self, price):
-		applied_stock_type_num = self.get_applied_stock_type_num()
-		budget = self.balance / (10 - applied_stock_type_num)
-		quantity = math.floor(budget / price)
-		return quantity
-
-	def get_balance(self):
+	def get_balance(self) -> float:
 		return self.balance
 
-	def set_balance(self, value):
-		self.balance = value
+	def increase_balance(self, value: int) -> None:
+		self.balance += value
+
+	def get_stock_detail(self) -> dict:
+		ret = self.stock_detail.copy()
+		for key in self.stock_detail:
+			ret[key] = self.stock_detail[key].todict()
+
+		return ret
+
+	def get_stock_quantity_and_amount(self, status: str, code: str) -> (int, float):
+		return tuple(self.stock_detail[status][code])
+
+	def set_stock_quantity_and_amount(self, status: str, code: str, value: (int, float)) -> None:
+		diff = value - self.stock_detail[status][code]
+		self.stock_detail[status][code] = value
+		self.stock_abstract[code] += diff
+
+	def increase_stock_quantity_and_amount(self, status: str, code: str, value: (int, float)) -> None:
+		self.stock_detail[status][code] += value
+		self.stock_abstract[code] += value
+
+	def get_applied_stock_type_num(self) -> int:
+		return len(self.stock_abstract)
 
 
 class dictDB(dict):
@@ -88,21 +55,31 @@ class dictDB(dict):
 		self.account_manager = db_manager()
 
 	def __getitem__(self, key):
-		value = self.account_manager.select(self.db_name, self.table_name, ['quantity'],
+		value = self.account_manager.select(self.db_name, self.table_name, ['quantity', 'amount'],
 		                                    {'strategy_name': self.strategy_name, 'code': key}).fetchone()
 
 		if value == None:
-			value = 0
+			value = np.array((0, 0.0))
 
-		return value
+		return np.array(value)
 
-	def __setitem__(self, key, value):
-		value = self.__getitem__(key)
-		if value == 0:
-			data = {'strategy_name': self.name, 'code': key, 'quantity': value}
+	def __setitem__(self, key, value) -> None:
+		(old_quantity, old_amount) = self.__getitem__(key)
+		(new_quantity, new_amount) = value
+		if old_quantity == 0:
+			data = {'strategy_name': self.strategy_name, 'code': key, 'quantity': new_quantity, 'amount': new_amount}
 			self.account_manager.insert(self.db_name, self.table_name, data)
 
 		else:
-			set_values = {'quantity': value}
-			where_values = {'strategy_name': self.name, 'code': key, }
+			set_values = {'quantity': new_quantity, 'amount': new_amount}
+			where_values = {'strategy_name': self.strategy_name, 'code': key, }
 			self.account_manager.update(self.db_name, self.table_name, set_values, where_values)
+
+	def __len__(self) -> int:
+		self.account_manager.select(self.db_name, self.table_name).fetchall()
+		return len(self.account_manager.select(self.db_name, self.table_name).fetchall())
+
+	def todict(self) -> dict:
+		raw_data = self.account_manager.select(self.db_name, self.table_name).fetchall()
+		data = {code: (quantity, amount) for (index, name, code, quantity, amount) in raw_data}
+		return data
