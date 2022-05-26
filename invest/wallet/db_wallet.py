@@ -1,4 +1,4 @@
-from investor.wallet.abstract_wallet import *
+from invest.wallet.abstract_wallet import *
 from database.db_manager import db_manager
 import numpy as np
 

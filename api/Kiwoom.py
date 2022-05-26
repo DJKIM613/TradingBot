@@ -1,5 +1,8 @@
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+import sys
+
 import time
 import pandas as pd
 from api.const import *
@@ -10,6 +13,7 @@ from util.singleton import *
 @singleton
 class Kiwoom(QAxWidget):
 	def __init__(self):
+		self.app = QApplication(sys.argv)
 		super().__init__()
 		self._make_kiwoom_instance()
 		self._set_signal_slots()
@@ -22,6 +26,9 @@ class Kiwoom(QAxWidget):
 		self.order = {}
 		self.balance = {}
 		self.universe_realtime_transaction_info = {}
+
+	def __del__(self):
+		self.app.exec_()
 
 	def _make_kiwoom_instance(self):
 		self.setControl("KHOPENAPI.KHOpenAPICtrl.1")

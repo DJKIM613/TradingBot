@@ -1,5 +1,5 @@
-from investor.wallet.abstract_wallet import *
-from investor.strategy import *
+from invest.wallet.abstract_wallet import *
+from invest.strategy import *
 import math
 
 MAX_STOCK_NUM = 10
@@ -10,7 +10,7 @@ open_sell = 'open_sell'
 holding_stock = 'holding_stock'
 
 
-class investor():
+class Investor:
 	def __init__(self, name, wallet, strategy):
 		self.name = name
 		self.strategy = strategy
@@ -19,6 +19,9 @@ class investor():
 
 	def getName(self):
 		return self.name
+
+	def getBalance(self):
+		return self.wallet.get_balance()
 
 	def updateStockPrices(self, stock_prices):
 		self.stock_prices = stock_prices
@@ -54,21 +57,24 @@ class investor():
 			       0] > 0 and self.strategy.check_sell_condition(
 			info) == True
 
-	def apply_buy_order(self, code, info) -> (str, int, float):
-		price = info['종가']
-		quantity = self.get_desired_quantity(price)
+	def apply_buy_order(self, code, price, quantity=None) -> (str, int, float):
+		if quantity is None:
+			quantity = self.get_desired_quantity(price)
 		amount = quantity * price
+		pay = (1 + COMMISION_FEE) * amount
+
+		if self.getBalance() < pay:
+			return None
 
 		self.wallet.increase_stock_quantity_and_amount(open_buy, code, (quantity, amount))
-		self.wallet.increase_balance(-amount * (1 + COMMISION_FEE))
+		self.wallet.increase_balance(-pay)
 		return (code, price, quantity)
 
 	def confirm_buy_order(self, code, price, quantity) -> None:
 		self.wallet.increase_stock_quantity_and_amount(open_buy, code, (-quantity, -quantity * price))
 		self.wallet.increase_stock_quantity_and_amount(holding_stock, code, (quantity, quantity * price))
 
-	def apply_sell_order(self, code, info) -> (str, int, float):
-		price = info['종가']
+	def apply_sell_order(self, code, price) -> (str, int, float):
 		self.wallet.get_stock_quantity_and_amount(holding_stock, code)
 		quantity, amount = self.wallet.get_stock_quantity_and_amount(holding_stock, code)
 		self.wallet.increase_stock_quantity_and_amount(holding_stock, code, (-quantity, -amount))
@@ -77,11 +83,16 @@ class investor():
 
 	def confirm_sell_order(self, code, sell_price, quantity):
 		amount = quantity * sell_price
+		pay = (1 - COMMISION_FEE) * amount
+
 		self.wallet.increase_stock_quantity_and_amount(open_sell, code, (-quantity, -amount))
-		self.wallet.increase_balance(amount * (1 - COMMISION_FEE))
+		self.wallet.increase_balance(pay)
 
 	def get_desired_quantity(self, price):
 		applied_stock_type_num = self.wallet.get_applied_stock_type_num()
 		budget = self.wallet.get_balance() / (10 - applied_stock_type_num)
-		quantity = math.floor(budget / price)
+		quantity = math.floor(budget / (price * (1 + COMMISION_FEE)))
 		return quantity
+
+	def get_stock_detail(self):
+		return self.wallet.get_stock_detail()

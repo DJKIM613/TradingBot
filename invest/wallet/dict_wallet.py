@@ -1,4 +1,4 @@
-from investor.wallet.abstract_wallet import *
+from invest.wallet.abstract_wallet import *
 import numpy as np
 
 
